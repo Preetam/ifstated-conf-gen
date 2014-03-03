@@ -30,8 +30,57 @@ will be printed to stdout.
 
 `$ cat example.json | go run main.go template.go`
 
+```
+# This file is generated automatically. DO NOT EDIT.
+init-state auto
+fw_carp_up = "carp0.link.up"
+fw_carp_init = "carp0.link.unknown"
+
+state auto {
+   if ($fw_carp_init)
+      run "sleep 10"
+   if ($fw_carp_up)
+      set-state fw_master
+   if (! $fw_carp_up)
+      set-state fw_slave
+}
+
+state fw_master {
+   init {
+      run "ifconfig em0 up"
+      
+      run "ifconfig vlan1 create"
+      run "ifconfig vlan1 10.0.0.1 netmask 255.255.255.0 vlan 1 vlandev em0"
+      
+      run "ifconfig vlan2 create"
+      run "ifconfig vlan2 10.0.1.1 netmask 255.255.255.0 vlan 2 vlandev em0"
+      
+   }
+
+   if ($fw_carp_init) {
+      run "sleep 2"
+   }
+   if (! $fw_carp_up)
+      set-state fw_slave
+}
+
+state fw_slave {
+   init {
+      run "ifconfig vlan1 destroy"
+      run "ifconfig vlan2 destroy"
+      
+      run "ifconfig em0 down"
+   }
+
+   if ($fw_carp_init)
+      run "sleep 2"
+   if ($fw_carp_up)
+      set-state fw_master
+}
+```
+
 Of course, you can also build a dependency-free binary and deploy it across
-all of your server.
+all of your server:
 
 `$ go build`
 
