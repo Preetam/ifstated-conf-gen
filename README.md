@@ -80,7 +80,7 @@ state fw_slave {
 ```
 
 Of course, you can also build a dependency-free binary and deploy it across
-all of your server:
+all of your servers:
 
 `$ go build`
 
